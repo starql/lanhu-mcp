@@ -1,5 +1,5 @@
 {
-  "name": "@starql/lanhu-mcp",
+  "name": "@star_work/lanhu-mcp",
   "version": "0.1.0",
   "description": "蓝湖设计稿 MCP Server —— 让 AI 编码助手读懂蓝湖设计稿",
   "type": "module",

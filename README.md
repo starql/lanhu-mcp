@@ -26,7 +26,7 @@
 ## 安装
 
 ```bash
-npm install -g @starql/lanhu-mcp
+npm install -g @star_work/lanhu-mcp
 ```
 
 首次运行需要安装 Playwright 浏览器（用于登录和解析邀请链接）：
@@ -60,7 +60,7 @@ npx playwright install chromium
   "mcpServers": {
     "lanhu": {
       "command": "npx",
-      "args": ["@starql/lanhu-mcp"]
+      "args": ["@star_work/lanhu-mcp"]
     }
   }
 }
