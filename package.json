@@ -1,24 +1,49 @@
 {
-  "name": "lanhu-mcp",
+  "name": "@starql/lanhu-mcp",
   "version": "0.1.0",
-  "description": "MCP Server for Lanhu design-to-code workflow",
+  "description": "蓝湖设计稿 MCP Server —— 让 AI 编码助手读懂蓝湖设计稿",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
     "lanhu-mcp": "dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
+    "prepublishOnly": "pnpm build",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "keywords": [
     "mcp",
     "lanhu",
-    "design"
+    "design",
+    "design-to-code",
+    "unocss",
+    "claude",
+    "ai"
   ],
+  "author": {
+    "name": "伽蓝",
+    "url": "https://github.com/starql"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/starql/lanhu-mcp"
+  },
+  "homepage": "https://github.com/starql/lanhu-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/starql/lanhu-mcp/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
