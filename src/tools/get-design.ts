@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import fs from 'node:fs'
+import path from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { parseLanhuUrl } from '../utils/link-parser.js'
 import { LanhuApiClient } from '../core/api.js'
@@ -9,7 +11,7 @@ const apiClient = new LanhuApiClient()
 export function registerGetDesignTool(server: McpServer): void {
   server.tool(
     'lanhu_get_design',
-    '获取蓝湖设计稿的清洗后结构化数据。返回精简图层树，包含 UnoCSS class、元素类型（container/text/image/shape/icon）和图片引用。用作生成前端代码的主要数据源。',
+    '获取蓝湖设计稿的清洗后结构化数据，作为开发参考资料。返回精简图层树，包含 UnoCSS class、元素类型和图片引用。获取后应先展示给用户确认，再进行代码编写。',
     {
       url: z.string().describe('蓝湖 URL，包含 tid 和 pid 参数。如 https://lanhuapp.com/web/#/item/project/stage?tid=xxx&pid=xxx&image_id=xxx'),
       image_id: z.string().optional().describe('设计图 ID。如果 URL 中没有，可从 lanhu_resolve_link 或设计图列表获取。'),
@@ -48,14 +50,23 @@ export function registerGetDesignTool(server: McpServer): void {
         // 解析并清洗
         const cleanedTree = parseSketchJson(sketchData, { isFigma, sliceScale })
 
+        // 落盘保存到 page/lanhu-mcp-assets/designs/
+        const designsDir = path.join(process.cwd(), 'page', 'lanhu-mcp-assets', 'designs')
+        if (!fs.existsSync(designsDir)) {
+          fs.mkdirSync(designsDir, { recursive: true })
+        }
+        const jsonFileName = `${targetImageId}.json`
+        const jsonFilePath = path.join(designsDir, jsonFileName)
+        const resultData = { sliceScale, isFigma, nodes: cleanedTree }
+        fs.writeFileSync(jsonFilePath, JSON.stringify(resultData, null, 2), 'utf-8')
+
         return {
           content: [{
             type: 'text',
             text: JSON.stringify({
               status: 'success',
-              sliceScale,
-              isFigma,
-              nodes: cleanedTree,
+              savedTo: jsonFilePath,
+              ...resultData,
             }, null, 2),
           }],
         }

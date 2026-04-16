@@ -2,3 +2,6 @@ node_modules/
 dist/
 *.js.map
 .env
+
+# 蓝湖 MCP 产出物（设计数据、截图、切图）
+page/lanhu-mcp-assets/

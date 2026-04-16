@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import path from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { parseLanhuUrl } from '../utils/link-parser.js'
 import { LanhuApiClient } from '../core/api.js'
@@ -35,11 +36,11 @@ function collectImageRefs(
 export function registerDownloadSlicesTool(server: McpServer): void {
   server.tool(
     'lanhu_download_slices',
-    '下载蓝湖设计稿中已标注的切图资源（图标、图片、背景图）。文件按类型命名：bg-1.webp、img-1.webp、icon-1.webp。返回下载清单。',
+    '下载蓝湖设计稿中已标注的切图资源（图标、图片、背景图）。文件按类型命名：bg-1.webp、img-1.webp、icon-1.webp。返回下载清单，供用户确认后在代码中引用。',
     {
       url: z.string().describe('蓝湖 URL，包含 tid、pid 和 image_id'),
       image_id: z.string().optional().describe('设计图 ID，如果 URL 中没有'),
-      output_dir: z.string().optional().describe('切图保存目录。默认为当前工作目录的 src/assets/。'),
+      output_dir: z.string().optional().describe('切图保存目录。默认为 page/lanhu-mcp-assets/slices/。'),
       format: z.enum(['webp', 'png', 'svg']).optional().describe('图片格式。默认 webp。'),
       scale: z.number().optional().describe('倍率（1、2 或 3）。默认 2。'),
     },
@@ -72,7 +73,7 @@ export function registerDownloadSlicesTool(server: McpServer): void {
         }
 
         // 下载
-        const targetDir = output_dir ?? 'src/assets'
+        const targetDir = output_dir ?? path.join(process.cwd(), 'page', 'lanhu-mcp-assets', 'slices')
         const targetFormat = format ?? 'webp'
         const targetScale = scale ?? 2
 

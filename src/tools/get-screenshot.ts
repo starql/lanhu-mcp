@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import fs from 'node:fs'
 import path from 'node:path'
-import os from 'node:os'
+// os 不再需要，截图默认存到项目目录
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { parseLanhuUrl } from '../utils/link-parser.js'
 import { ensureCookie } from '../core/auth.js'
@@ -10,10 +10,10 @@ import { chromium } from 'playwright'
 export function registerGetScreenshotTool(server: McpServer): void {
   server.tool(
     'lanhu_get_screenshot',
-    '对蓝湖设计稿页面截图。返回截图文件路径，用于视觉参考。配合 lanhu_get_design 使用可全面理解设计。',
+    '对蓝湖设计稿页面截图，用于视觉参考。返回截图文件路径，应展示给用户确认设计意图后再编写代码。',
     {
       url: z.string().describe('要截图的蓝湖 URL'),
-      output_path: z.string().optional().describe('截图保存路径。默认保存到 ~/.lanhu-mcp/screenshots/<imageId>.png'),
+      output_path: z.string().optional().describe('截图保存路径。默认保存到 page/lanhu-mcp-assets/screenshots/'),
     },
     async ({ url, output_path }) => {
       try {
@@ -34,8 +34,8 @@ export function registerGetScreenshotTool(server: McpServer): void {
         await page.goto(url, { waitUntil: 'networkidle', timeout: 60_000 })
         await page.waitForTimeout(3000) // 等待设计稿渲染完成
 
-        // 确定保存路径
-        const screenshotDir = path.join(os.homedir(), '.lanhu-mcp', 'screenshots')
+        // 确定保存路径：默认保存到 page/lanhu-mcp-assets/screenshots/
+        const screenshotDir = path.join(process.cwd(), 'page', 'lanhu-mcp-assets', 'screenshots')
         if (!fs.existsSync(screenshotDir)) {
           fs.mkdirSync(screenshotDir, { recursive: true })
         }
