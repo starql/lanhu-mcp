@@ -22,6 +22,7 @@ export interface DesignJsonResult {
   sketchData: any
   sliceScale: number
   isFigma: boolean
+  previewUrl: string
 }
 
 export class LanhuApiClient {
@@ -122,7 +123,11 @@ export class LanhuApiClient {
         throw new Error('从蓝湖 API 获取设计稿 JSON URL 失败')
       }
 
-      const jsonUrl = result.versions[0].json_url
+      const version = result.versions[0]
+      const jsonUrl = version.json_url
+
+      // 设计稿预览图 URL
+      const previewUrl: string = result.url ?? version.url ?? ''
 
       // 第二步：下载完整的 Sketch JSON
       const jsonRes = await client.get(jsonUrl)
@@ -135,7 +140,7 @@ export class LanhuApiClient {
       )
       const isFigma = meta?.host?.name === 'figma'
 
-      return { sketchData, sliceScale, isFigma }
+      return { sketchData, sliceScale, isFigma, previewUrl }
     })
   }
 

@@ -1,49 +1,63 @@
 import { z } from 'zod'
 import fs from 'node:fs'
 import path from 'node:path'
-// os 不再需要，截图默认存到项目目录
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { parseLanhuUrl } from '../utils/link-parser.js'
-import { ensureCookie } from '../core/auth.js'
-import { chromium } from 'playwright'
+import { LanhuApiClient } from '../core/api.js'
+import axios from 'axios'
+
+const apiClient = new LanhuApiClient()
 
 export function registerGetScreenshotTool(server: McpServer): void {
   server.tool(
     'lanhu_get_screenshot',
-    '对蓝湖设计稿页面截图，用于视觉参考。返回截图文件路径，应展示给用户确认设计意图后再编写代码。',
+    '获取蓝湖设计稿预览图，用于视觉参考。通过 API 直接下载设计稿渲染图。应展示给用户确认设计意图后再编写代码。',
     {
-      url: z.string().describe('要截图的蓝湖 URL'),
+      url: z.string().describe('蓝湖 URL，包含 tid、pid 和 image_id'),
+      image_id: z.string().optional().describe('设计图 ID，如果 URL 中没有'),
       output_path: z.string().optional().describe('截图保存路径。默认保存到 page/lanhu-mcp-assets/screenshots/'),
     },
-    async ({ url, output_path }) => {
+    async ({ url, image_id, output_path }) => {
       try {
         const params = parseLanhuUrl(url)
-        const cookie = await ensureCookie()
+        const targetImageId = image_id ?? params.imageId
 
-        // 将 cookie 字符串解析为 Playwright 格式
-        const cookies = cookie.split('; ').map((c) => {
-          const [name, ...rest] = c.split('=')
-          return { name, value: rest.join('='), domain: '.lanhuapp.com', path: '/' }
-        })
+        if (!targetImageId) {
+          return {
+            content: [{ type: 'text', text: '错误: 需要 image_id。请先使用 lanhu_get_design 获取设计图列表。' }],
+            isError: true,
+          }
+        }
 
-        const browser = await chromium.launch({ headless: true })
-        const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } })
-        await context.addCookies(cookies)
+        // 通过 API 获取设计稿预览图 URL
+        const { previewUrl } = await apiClient.getDesignJson(
+          params.projectId, targetImageId, params.teamId,
+        )
 
-        const page = await context.newPage()
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 60_000 })
-        await page.waitForTimeout(3000) // 等待设计稿渲染完成
+        if (!previewUrl) {
+          return {
+            content: [{ type: 'text', text: '该设计稿没有可用的预览图 URL。' }],
+            isError: true,
+          }
+        }
 
-        // 确定保存路径：默认保存到 page/lanhu-mcp-assets/screenshots/
+        // 确定保存路径
         const screenshotDir = path.join(process.cwd(), 'page', 'lanhu-mcp-assets', 'screenshots')
         if (!fs.existsSync(screenshotDir)) {
           fs.mkdirSync(screenshotDir, { recursive: true })
         }
-        const fileName = `${params.imageId ?? params.projectId}-${Date.now()}.png`
+
+        // 从 URL 中推断扩展名
+        const ext = previewUrl.match(/\.(png|jpg|jpeg|webp)/i)?.[1] ?? 'png'
+        const fileName = `${targetImageId}.${ext}`
         const savePath = output_path ?? path.join(screenshotDir, fileName)
 
-        await page.screenshot({ path: savePath, fullPage: true })
-        await browser.close()
+        // 下载预览图
+        const imgRes = await axios.get(previewUrl, {
+          responseType: 'arraybuffer',
+          timeout: 30_000,
+        })
+        fs.writeFileSync(savePath, Buffer.from(imgRes.data))
 
         return {
           content: [{
@@ -51,13 +65,14 @@ export function registerGetScreenshotTool(server: McpServer): void {
             text: JSON.stringify({
               status: 'success',
               screenshotPath: savePath,
-              message: `截图已保存到: ${savePath}`,
+              previewUrl,
+              message: `设计稿预览图已保存到: ${savePath}`,
             }, null, 2),
           }],
         }
       } catch (err: any) {
         return {
-          content: [{ type: 'text', text: `截图失败: ${err.message}` }],
+          content: [{ type: 'text', text: `获取预览图失败: ${err.message}` }],
           isError: true,
         }
       }
