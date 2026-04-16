@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "lanhu": {
+      "command": "node",
+      "args": ["/Users/gylc/GY_Projects/lanhu-mcp-1/dist/index.js"]
+    }
+  }
+}
