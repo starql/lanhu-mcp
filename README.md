@@ -79,9 +79,19 @@ npx playwright install chromium
 
 ### 1. 给出蓝湖链接
 
-将 UI 设计师分享的蓝湖链接发给 Claude Code：
+将 UI 设计师分享的蓝湖链接发给 Claude Code。以下是一些提示词示例：
 
+**分析设计稿（仅获取参考数据）：**
 > 帮我分析这个设计稿 https://lanhuapp.com/web/#/item/project/detailDetach?tid=xxx&pid=xxx&image_id=xxx
+
+**分析并还原页面：**
+> 根据这个蓝湖设计稿还原页面，技术栈用 Vue 3 + UnoCSS https://lanhuapp.com/web/#/item/...
+
+**只下载切图：**
+> 帮我下载这个设计稿的切图资源 https://lanhuapp.com/web/#/item/...
+
+**分析多个设计稿：**
+> 这个项目有多个页面，先列出所有设计图让我选 https://lanhuapp.com/web/#/item/project/stage?tid=xxx&pid=xxx
 
 ### 2. 自动登录
 
